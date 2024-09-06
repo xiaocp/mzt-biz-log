@@ -9,7 +9,7 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,8 +31,8 @@ public class LogRecordExpressionEvaluator extends CachedExpressionEvaluator {
         return getExpression(this.expressionCache, methodKey, conditionExpression).getValue(evalContext, Boolean.class);
     }
 
-    public List<?> parseListExpression(String conditionExpression, AnnotatedElementKey methodKey, EvaluationContext evalContext) {
-        return getExpression(this.expressionCache, methodKey, conditionExpression).getValue(evalContext, List.class);
+    public Collection<?> parseCollectionExpression(String conditionExpression, AnnotatedElementKey methodKey, EvaluationContext evalContext) {
+        return getExpression(this.expressionCache, methodKey, conditionExpression).getValue(evalContext, Collection.class);
     }
 
     /**

@@ -181,7 +181,7 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         String operatorIdFromService = getOperatorIdFromServiceAndPutTemplate(operation, spElTemplates);
         Map<String, String> expressionValues = processTemplate(spElTemplates, methodExecuteResult, functionNameAndReturnMap);
 
-        List<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
+        Collection<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
         if (!CollectionUtils.isEmpty(bizNoList)) {
             saveLog(methodExecuteResult.getMethod(), !flag, bizNoList, operation, operatorIdFromService, action, expressionValues);
         } else {
@@ -198,7 +198,7 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         String operatorIdFromService = getOperatorIdFromServiceAndPutTemplate(operation, spElTemplates);
 
         Map<String, String> expressionValues = processTemplate(spElTemplates, methodExecuteResult, functionNameAndReturnMap);
-        List<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
+        Collection<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
         if (!CollectionUtils.isEmpty(bizNoList)) {
             saveLog(methodExecuteResult.getMethod(), true, bizNoList, operation, operatorIdFromService, action, expressionValues);
         } else {
@@ -237,7 +237,7 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         bizLogService.record(logRecord);
     }
 
-    private void saveLog(Method method, boolean flag, List<String> bizNoList, LogRecordOps operation, String operatorIdFromService,
+    private void saveLog(Method method, boolean flag, Collection<String> bizNoList, LogRecordOps operation, String operatorIdFromService,
                          String action, Map<String, String> expressionValues) {
         if (StringUtils.isEmpty(expressionValues.get(action)) ||
                 (!diffLog && action.contains("#") && Objects.equals(action, expressionValues.get(action)))) {

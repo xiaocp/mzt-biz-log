@@ -2,6 +2,7 @@ package com.mzt.logserver;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.mzt.logapi.beans.CodeVariableType;
 import com.mzt.logapi.beans.LogRecord;
 import com.mzt.logapi.starter.support.aop.LogRecordInterceptor;
@@ -102,6 +103,26 @@ public class IOrderServiceTest extends BaseTest {
         order2.setPurchaseName("李四");
 
         orderService.createOrderList2(Lists.newArrayList(order, order2));
+
+        logRecordService.clean();
+    }
+
+    @Test
+    @Sql(scripts = "/sql/clean.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void createOrderList2_1() {
+        Order order = new Order();
+        order.setOrderNo("MT0000011");
+        order.setProductName("超值优惠红烧肉套餐");
+        order.setPurchaseName("张三");
+        order.setItems(Lists.newArrayList("1", "2"));
+        order.setItems2(Sets.newHashSet("1", "2"));
+
+        Order order2 = new Order();
+        order2.setOrderNo("MT0000021");
+        order2.setProductName("超值优惠鸡排套餐");
+        order2.setPurchaseName("李四");
+
+        orderService.createOrderList2(order);
 
         logRecordService.clean();
     }

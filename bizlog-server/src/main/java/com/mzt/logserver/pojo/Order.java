@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author muzhantong
@@ -31,6 +32,8 @@ public class Order {
     private UserDO updater;
     @DiffLogField(name = "列表项", function = "ORDER")
     private List<String> items;
+
+    private Set<String> items2;
 
     @DiffLogField(name = "拓展信息", function = "extInfo")
     private String[] extInfo;

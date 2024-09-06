@@ -76,6 +76,15 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     @LogRecord(
+            subType = "MANAGER_VIEW", extra = "",
+            success = "下了一个订单,下单结果:{{#_ret}}",
+            type = LogRecordType.ORDER, bizNo = "{{#order.items2}}")
+    public boolean createOrderList2(Order order) {
+        return false;
+    }
+
+    @Override
+    @LogRecord(
             subType = "MANAGER_VIEW", extra = "{{#order.toString()}}",
             success = "{{#order.purchaseName}}下了一个订单,购买商品「{{#order.productName}}」,下单结果:{{#_ret}}",
             type = LogRecordType.ORDER, bizNo = "{{#order.orderNo}}")

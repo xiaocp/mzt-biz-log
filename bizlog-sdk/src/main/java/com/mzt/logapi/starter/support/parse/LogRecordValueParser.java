@@ -88,7 +88,7 @@ public class LogRecordValueParser implements BeanFactoryAware {
         return expressionValues;
     }
 
-    public List<String> processBizNoTemplate(String templates, MethodExecuteResult methodExecuteResult) {
+    public Collection<String> processBizNoTemplate(String templates, MethodExecuteResult methodExecuteResult) {
 
         EvaluationContext evaluationContext = expressionEvaluator.createEvaluationContext(methodExecuteResult.getMethod(),
                 methodExecuteResult.getArgs(), methodExecuteResult.getTargetClass(), methodExecuteResult.getResult(),
@@ -99,13 +99,12 @@ public class LogRecordValueParser implements BeanFactoryAware {
             AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(methodExecuteResult.getMethod(), methodExecuteResult.getTargetClass());
             while (matcher.find()) {
                 String expression = matcher.group(2);
-                String functionName = matcher.group(1);
 
-                String expressionJudge = expression + " instanceof T(java.util.List)";
+                String expressionJudge = expression + " instanceof T(java.util.Collection)";
                 Boolean value = expressionEvaluator.parseBooleanExpression(expressionJudge, annotatedElementKey, evaluationContext);
-                if(value){
+                if (value) {
                     String expressionList = expression + " != null ? " + expression + ".![T(java.lang.String).valueOf(#this)] : null";
-                    return  (List<String>) expressionEvaluator.parseListExpression(expressionList, annotatedElementKey, evaluationContext);
+                    return (Collection<String>) expressionEvaluator.parseCollectionExpression(expressionList, annotatedElementKey, evaluationContext);
                 }
             }
         }
@@ -169,6 +168,7 @@ public class LogRecordValueParser implements BeanFactoryAware {
         return functionNameAndReturnValueMap;
     }
 
+    /**
     public Map<String, Pair<Boolean, List<String>>> processBeforeExecuteBizNoFunctionTemplate(Collection<String> templates, Class<?> targetClass, Method method, Object[] args) {
         Map<String, Pair<Boolean, List<String>>> functionNameAndReturnValueMap = new HashMap<>();
         EvaluationContext evaluationContext = expressionEvaluator.createEvaluationContext(method, args, targetClass, null, null, beanFactory);
@@ -198,7 +198,7 @@ public class LogRecordValueParser implements BeanFactoryAware {
             }
         }
         return functionNameAndReturnValueMap;
-    }
+    }*/
 
 
     @Override

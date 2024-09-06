@@ -29,6 +29,8 @@ public interface IOrderService {
 
     boolean createOrderList2(List<Order> orderList);
 
+    boolean createOrderList2(Order order);
+
     boolean createOrder_fail(Order order);
 
     boolean updateBefore(Long orderId, Order order);
