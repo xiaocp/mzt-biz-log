@@ -4,6 +4,7 @@ import com.mzt.logapi.beans.CodeVariableType;
 import com.mzt.logapi.beans.LogRecord;
 import com.mzt.logapi.beans.LogRecordOps;
 import com.mzt.logapi.beans.MethodExecuteResult;
+import com.mzt.logapi.beans.Pair;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.IFunctionService;
 import com.mzt.logapi.service.ILogRecordPerformanceMonitor;
@@ -18,6 +19,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.expression.EvaluationContext;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
@@ -25,6 +27,7 @@ import org.springframework.util.StringUtils;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.mzt.logapi.service.ILogRecordPerformanceMonitor.*;
 
@@ -67,10 +70,13 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         LogRecordContext.putEmptySpan();
         Collection<LogRecordOps> operations = new ArrayList<>();
         Map<String, String> functionNameAndReturnMap = new HashMap<>();
+        //Map<String, Pair<Boolean, List<String>>> functionNameIsListMap = new HashMap<>();
         try {
             operations = logRecordOperationSource.computeLogRecordOperations(method, targetClass);
             List<String> spElTemplates = getBeforeExecuteFunctionTemplate(operations);
+            //List<String> bizNoSpElTemplates = getBeforeExecuteBizNoFunctionTemplate(operations);
             functionNameAndReturnMap = processBeforeExecuteFunctionTemplate(spElTemplates, targetClass, method, args);
+            //functionNameIsListMap = processBeforeExecuteBizNoFunctionTemplate(bizNoSpElTemplates, targetClass, method, args);
         } catch (Exception e) {
             log.error("log record parse before function exception", e);
         } finally {
@@ -122,6 +128,14 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         return spElTemplates;
     }
 
+    private List<String> getBeforeExecuteBizNoFunctionTemplate(Collection<LogRecordOps> operations) {
+        List<String> spElTemplates = new ArrayList<>();
+        for (LogRecordOps operation : operations) {
+            spElTemplates.add(operation.getBizNo());
+        }
+        return spElTemplates;
+    }
+
     private void recordExecute(MethodExecuteResult methodExecuteResult, Map<String, String> functionNameAndReturnMap,
                                Collection<LogRecordOps> operations) {
         for (LogRecordOps operation : operations) {
@@ -166,7 +180,13 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         List<String> spElTemplates = getSpElTemplates(operation, action);
         String operatorIdFromService = getOperatorIdFromServiceAndPutTemplate(operation, spElTemplates);
         Map<String, String> expressionValues = processTemplate(spElTemplates, methodExecuteResult, functionNameAndReturnMap);
-        saveLog(methodExecuteResult.getMethod(), !flag, operation, operatorIdFromService, action, expressionValues);
+
+        List<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
+        if (!CollectionUtils.isEmpty(bizNoList)) {
+            saveLog(methodExecuteResult.getMethod(), !flag, bizNoList, operation, operatorIdFromService, action, expressionValues);
+        } else {
+            saveLog(methodExecuteResult.getMethod(), !flag, operation, operatorIdFromService, action, expressionValues);
+        }
     }
 
     private void failRecordExecute(MethodExecuteResult methodExecuteResult, Map<String, String> functionNameAndReturnMap,
@@ -178,7 +198,12 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         String operatorIdFromService = getOperatorIdFromServiceAndPutTemplate(operation, spElTemplates);
 
         Map<String, String> expressionValues = processTemplate(spElTemplates, methodExecuteResult, functionNameAndReturnMap);
-        saveLog(methodExecuteResult.getMethod(), true, operation, operatorIdFromService, action, expressionValues);
+        List<String> bizNoList = processBizNoTemplate(operation.getBizNo(), methodExecuteResult);
+        if (!CollectionUtils.isEmpty(bizNoList)) {
+            saveLog(methodExecuteResult.getMethod(), true, bizNoList, operation, operatorIdFromService, action, expressionValues);
+        } else {
+            saveLog(methodExecuteResult.getMethod(), true, operation, operatorIdFromService, action, expressionValues);
+        }
     }
 
     private boolean exitsCondition(MethodExecuteResult methodExecuteResult,
@@ -210,6 +235,31 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
                 .build();
 
         bizLogService.record(logRecord);
+    }
+
+    private void saveLog(Method method, boolean flag, List<String> bizNoList, LogRecordOps operation, String operatorIdFromService,
+                         String action, Map<String, String> expressionValues) {
+        if (StringUtils.isEmpty(expressionValues.get(action)) ||
+                (!diffLog && action.contains("#") && Objects.equals(action, expressionValues.get(action)))) {
+            return;
+        }
+        List<LogRecord> logRecords = bizNoList.stream().map(bizNo -> {
+            LogRecord logRecord = LogRecord.builder()
+                    .tenant(tenantId)
+                    .type(expressionValues.get(operation.getType()))
+                    .bizNo(bizNo)
+                    .operator(getRealOperatorId(operation, operatorIdFromService, expressionValues))
+                    .subType(expressionValues.get(operation.getSubType()))
+                    .extra(expressionValues.get(operation.getExtra()))
+                    .codeVariable(getCodeVariable(method))
+                    .action(expressionValues.get(action))
+                    .fail(flag)
+                    .createTime(new Date())
+                    .build();
+            return logRecord;
+        }).collect(Collectors.toList());
+
+        bizLogService.batchRecord(logRecords);
     }
 
     private Map<CodeVariableType, Object> getCodeVariable(Method method) {

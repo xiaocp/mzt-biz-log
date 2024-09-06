@@ -26,6 +26,12 @@ public class DbLogRecordService implements ILogRecordService {
     }
 
     @Override
+    public void batchRecord(List<LogRecord> logRecordList) {
+        log.info("batchRecord:{}", logRecordList);
+        logRecordRepository.saveBatch(LogRecordPO.fromList(logRecordList));
+    }
+
+    @Override
     public List<LogRecord> queryLog(String bizNo, String type) {
         List<LogRecordPO> logRecordPOS = logRecordRepository.queryLog(bizNo, type);
         return LogRecordPO.from(logRecordPOS);

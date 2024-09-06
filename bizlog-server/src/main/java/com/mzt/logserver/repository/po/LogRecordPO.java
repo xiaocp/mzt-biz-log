@@ -83,6 +83,17 @@ public class LogRecordPO {
         return logRecordPO;
     }
 
+    public static List<LogRecordPO> fromList(List<LogRecord> logRecordList) {
+        List<LogRecordPO> ret = Lists.newArrayListWithCapacity(logRecordList.size());
+        logRecordList.forEach(e -> {
+            LogRecordPO logRecordPO = new LogRecordPO();
+            BeanUtils.copyProperties(e, logRecordPO);
+            logRecordPO.setCodeVariable(JSONUtil.toJsonStr(e.getCodeVariable()));
+            ret.add(logRecordPO);
+        });
+        return ret;
+    }
+
     public static List<LogRecord> from(List<LogRecordPO> logRecordPOS) {
         List<LogRecord> ret = Lists.newArrayListWithCapacity(logRecordPOS.size());
         for (LogRecordPO logRecordPO : logRecordPOS) {

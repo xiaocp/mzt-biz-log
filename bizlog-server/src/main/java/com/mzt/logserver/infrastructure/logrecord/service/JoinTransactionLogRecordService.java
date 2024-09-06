@@ -33,6 +33,11 @@ public class JoinTransactionLogRecordService implements ILogRecordService {
     }
 
     @Override
+    public void batchRecord(List<LogRecord> logRecordList) {
+
+    }
+
+    @Override
     public List<LogRecord> queryLog(String bizNo, String type) {
         List<LogRecordPO> logRecordPOS = logRecordRepository.queryLog(bizNo, type);
         return LogRecordPO.from(logRecordPOS);

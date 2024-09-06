@@ -14,6 +14,7 @@ import org.assertj.core.util.Lists;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author muzhantong
@@ -40,6 +41,36 @@ public class OrderServiceImpl implements IOrderService {
         Order order1 = new Order();
         order1.setProductName("内部变量测试");
         LogRecordContext.putVariable("innerOrder", order1);
+        return true;
+    }
+
+    @Override
+    @LogRecord(
+            subType = "MANAGER_VIEW", extra = "",
+            success = "下了一个订单,下单结果:{{#_ret}}",
+            type = LogRecordType.ORDER, bizNo = "{{#orderList}}")
+    public boolean createOrderList(List<String> orderList) {
+        orderList.forEach(order->{
+            // db insert order
+            Order order1 = new Order();
+            order1.setProductName("内部变量测试");
+            order1.setOrderNo(order);
+        });
+        return true;
+    }
+
+    @Override
+    @LogRecord(
+            subType = "MANAGER_VIEW", extra = "",
+            success = "下了一个订单,下单结果:{{#_ret}}",
+            type = LogRecordType.ORDER, bizNo = "{{#orderList.![orderNo]}}")
+    public boolean createOrderList2(List<Order> orderList) {
+        orderList.forEach(order->{
+            // db insert order
+            Order order1 = new Order();
+            order1.setProductName("内部变量测试");
+        });
+
         return true;
     }
 

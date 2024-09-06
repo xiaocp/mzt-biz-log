@@ -72,6 +72,42 @@ public class IOrderServiceTest extends BaseTest {
 
     @Test
     @Sql(scripts = "/sql/clean.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void createOrderList() {
+        Order order = new Order();
+        order.setOrderNo("MT0000011");
+        order.setProductName("超值优惠红烧肉套餐");
+        order.setPurchaseName("张三");
+
+        Order order2 = new Order();
+        order2.setOrderNo("MT0000021");
+        order2.setProductName("超值优惠鸡排套餐");
+        order2.setPurchaseName("李四");
+
+        orderService.createOrderList(Lists.newArrayList("M1", "M2"));
+
+        logRecordService.clean();
+    }
+
+    @Test
+    @Sql(scripts = "/sql/clean.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void createOrderList2() {
+        Order order = new Order();
+        order.setOrderNo("MT0000011");
+        order.setProductName("超值优惠红烧肉套餐");
+        order.setPurchaseName("张三");
+
+        Order order2 = new Order();
+        order2.setOrderNo("MT0000021");
+        order2.setProductName("超值优惠鸡排套餐");
+        order2.setPurchaseName("李四");
+
+        orderService.createOrderList2(Lists.newArrayList(order, order2));
+
+        logRecordService.clean();
+    }
+
+    @Test
+    @Sql(scripts = "/sql/clean.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void createOrderMonitor() {
 
         for (int i = 0; i < 100; i++) {

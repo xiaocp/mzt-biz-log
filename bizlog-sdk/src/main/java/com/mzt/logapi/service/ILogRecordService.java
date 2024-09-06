@@ -14,6 +14,13 @@ public interface ILogRecordService {
     void record(LogRecord logRecord);
 
     /**
+     * 批量保存log
+     *
+     * @param logRecordList 日志实体
+     */
+    void batchRecord(List<LogRecord> logRecordList);
+
+    /**
      * 返回最多100条记录
      *
      * @param type  操作日志类型

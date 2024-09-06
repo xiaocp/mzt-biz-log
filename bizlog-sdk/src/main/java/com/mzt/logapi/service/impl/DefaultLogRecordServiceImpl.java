@@ -26,6 +26,11 @@ public class DefaultLogRecordServiceImpl implements ILogRecordService {
     }
 
     @Override
+    public void batchRecord(List<LogRecord> logRecordList) {
+        log.info("【logBatchRecord】log={}", logRecordList);
+    }
+
+    @Override
     public List<LogRecord> queryLog(String bizNo, String type) {
         return new ArrayList<>();
     }

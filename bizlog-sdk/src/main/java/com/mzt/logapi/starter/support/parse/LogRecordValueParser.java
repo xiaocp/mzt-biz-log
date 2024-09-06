@@ -1,6 +1,7 @@
 package com.mzt.logapi.starter.support.parse;
 
 import com.mzt.logapi.beans.MethodExecuteResult;
+import com.mzt.logapi.beans.Pair;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -87,6 +88,41 @@ public class LogRecordValueParser implements BeanFactoryAware {
         return expressionValues;
     }
 
+    public List<String> processBizNoTemplate(String templates, MethodExecuteResult methodExecuteResult) {
+
+        EvaluationContext evaluationContext = expressionEvaluator.createEvaluationContext(methodExecuteResult.getMethod(),
+                methodExecuteResult.getArgs(), methodExecuteResult.getTargetClass(), methodExecuteResult.getResult(),
+                methodExecuteResult.getErrorMsg(), beanFactory);
+
+        if (templates.contains("{")) {
+            Matcher matcher = pattern.matcher(templates);
+            AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(methodExecuteResult.getMethod(), methodExecuteResult.getTargetClass());
+            while (matcher.find()) {
+                String expression = matcher.group(2);
+                String functionName = matcher.group(1);
+
+                String expressionJudge = expression + " instanceof T(java.util.List)";
+                Boolean value = expressionEvaluator.parseBooleanExpression(expressionJudge, annotatedElementKey, evaluationContext);
+                if(value){
+                    String expressionList = expression + " != null ? " + expression + ".![T(java.lang.String).valueOf(#this)] : null";
+                    return  (List<String>) expressionEvaluator.parseListExpression(expressionList, annotatedElementKey, evaluationContext);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean recordSameDiff(boolean sameDiff, boolean diffSameWhetherSaveLog) {
+        if(diffSameWhetherSaveLog == true) {
+            return true;
+        }
+        if(!diffSameWhetherSaveLog && sameDiff) {
+            return false;
+        }
+        return true;
+    }
+
     private String getDiffFunctionValue(EvaluationContext evaluationContext, AnnotatedElementKey annotatedElementKey, String expression) {
         String[] params = parseDiffFunction(expression);
         if (params.length == 1) {
@@ -126,6 +162,37 @@ public class LogRecordValueParser implements BeanFactoryAware {
                         String functionReturnValue = logFunctionParser.getFunctionReturnValue(null, value, expression, functionName);
                         String functionCallInstanceKey = logFunctionParser.getFunctionCallInstanceKey(functionName, expression);
                         functionNameAndReturnValueMap.put(functionCallInstanceKey, functionReturnValue);
+                    }
+                }
+            }
+        }
+        return functionNameAndReturnValueMap;
+    }
+
+    public Map<String, Pair<Boolean, List<String>>> processBeforeExecuteBizNoFunctionTemplate(Collection<String> templates, Class<?> targetClass, Method method, Object[] args) {
+        Map<String, Pair<Boolean, List<String>>> functionNameAndReturnValueMap = new HashMap<>();
+        EvaluationContext evaluationContext = expressionEvaluator.createEvaluationContext(method, args, targetClass, null, null, beanFactory);
+
+        for (String expressionTemplate : templates) {
+            if (expressionTemplate.contains("{")) {
+                Matcher matcher = pattern.matcher(expressionTemplate);
+                while (matcher.find()) {
+                    String expression = matcher.group(2);
+                    if (expression.contains("#_ret") || expression.contains("#_errorMsg")) {
+                        continue;
+                    }
+                    AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(method, targetClass);
+                    String functionName = matcher.group(1);
+                    if (logFunctionParser.beforeFunction(functionName)) {
+                        String expressionJudge = expression + " instanceof T(java.util.List)";
+                        Boolean value = expressionEvaluator.parseBooleanExpression(expressionJudge, annotatedElementKey, evaluationContext);
+                        List<String> bizNoList = null;
+                        if (value) {
+                            String expressionList = expression + " != null ? " + expression + ".![T(java.lang.String).valueOf(#this)] : null";
+                            bizNoList = (List<String>) expressionEvaluator.parseListExpression(expressionList, annotatedElementKey, evaluationContext);
+                        }
+                        String functionCallInstanceKey = logFunctionParser.getFunctionCallInstanceKey(functionName, expression);
+                        functionNameAndReturnValueMap.put(functionCallInstanceKey, Pair.of(value, bizNoList));
                     }
                 }
             }
